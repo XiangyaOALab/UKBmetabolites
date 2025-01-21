@@ -1,0 +1,13 @@
+/* followy_oa denotes the time to event. */
+/* STATUS is the event-type indicator variable: */
+/* STATUS = 1 denotes knee osteoarthritis. */
+/* STATUS = 2 denotes death. */
+/* STATUS = 0 denotes a censored observation. */
+/* The data are stored in a SAS working dataset called ‘Cleaned_dataset_3’ */
+
+proc phreg data=Cleaned_dataset_3;
+class sex(ref='0') bmi1(ref='0')  alcohol(ref='0') smoking(ref='0') ftcat3(ref='0') Lipid_lowering_drugs(ref='0') knee_injury(ref='0')/param=ref;
+model followy_oa*STATUS(0)=metat10 age sex bmi1 alcohol smoking ftcat3 Lipid_lowering_drugs knee_injury Townsend/eventcode=1 risklimits;
+by meta_name;
+ods output parameterestimates=pred;
+run;
