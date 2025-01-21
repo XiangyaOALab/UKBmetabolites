@@ -1,0 +1,86 @@
+library(ggplot2)
+library(RColorBrewer)
+library(ggrepel)
+library(RUnit)
+library(ggforce)
+library(tidyverse)
+library(ggpubr)
+library(ggprism)
+library(paletteer)
+library(data.table)
+library(readxl)
+library(ggsci)
+library(scales)
+library(dplyr)
+library(grid)
+library(showtext)
+
+rm(list = ls())
+
+data <- read_xlsx("C:/Users/Lenovo/Desktop/data-circus-oa2.xlsx", sheet = "KOA-subclass")
+
+data$color<- ifelse(data$HR<1,0,1)
+data$id <- seq(1, nrow(data))
+label_data <- as.data.frame(data) 
+label_data <- label_data %>% mutate(id = row_number()) 
+number_of_bar <- nrow(label_data) 
+angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar
+label_data$hjust <- ifelse(angle < -90, 1, 0)    
+label_data$angle <- ifelse(angle < -90, angle+180, angle)  
+label_data$color <- ifelse(label_data$P < 0.00555555555555555555555555555556, "black", "darkgrey") 
+label_data$star <- ifelse(label_data$P < 0.00555555555555555555555555555556, "*", "")   
+base_data <- data %>% 
+  group_by(Group) %>% 
+  dplyr::summarize(start=min(id) - 0.5, end=max(id)-2 + 0.5) %>% 
+  rowwise() %>% 
+  mutate(title=mean(c(start, end))) 
+base_data$title[3] <- base_data$title[3]-2 
+title_angle <- base_data$title*360/number_of_bar  
+base_data$title_angle <- ifelse(90<title_angle & title_angle<270, title_angle - 180, title_angle)   
+base_data$end[3] <- base_data$end[3]-8
+label_data$fontface<-ifelse(label_data$significant == "1", "bold", "plain")
+
+base_data$background<-c("#82B0D2","#82B0D2","#ffe599","#A5C496","#A5C496","#FA7F6F","#FA7F6F") #("#f0e3aa","#f0e3aa","#d9d2e9","#A5C496","#A5C496","#8e7cc3","#8e7cc3")
+circ_p_agesex <- ggplot(data, aes(x=as.factor(id), y=HR-1,fill=as.factor(color))) +
+  geom_bar(aes(x=as.factor(id), y=HR-1,fill=as.factor(color)), stat="identity",alpha=0.8,na.rm = FALSE) +  
+  geom_segment(data=base_data, aes(x = start, y = 0.15, xend = end, yend = 0.15),   
+               colour = "darkgrey", alpha=0.8, size=0.15, inherit.aes = FALSE) +
+  geom_segment(data=base_data, aes(x = start, y = 0, xend = end, yend = 0),
+               colour = "black", alpha=0.8, size=0.3, inherit.aes = FALSE)  +
+  geom_segment(data=base_data, aes(x = start, y = -0.15, xend = end, yend = -0.15),   
+               colour = "darkgrey", alpha=0.8, size=0.15, inherit.aes = FALSE) +
+  annotate("text", x = rep(max(data$id),3), y = c( -0.15, 0, 0.15), 
+           label = c("0.85", "1", "1.15") , 
+           color="black", size=3 , angle=0, fontface="bold", hjust=1) +
+  annotate("text", x = 0, y = -0.5, 
+           label = "Lipoprotein metabolites\n and risk of incident KOA", 
+           color = "black", size = 4, 
+           fontface = "bold", hjust = 0.5, vjust = 0.5)+
+  scale_y_continuous(labels = function(x) x + 1, limits = c(-0.5,1)) +
+  scale_fill_manual(values=c('1'="#DF576E",'0'="#2297E6")) + 
+  geom_errorbar(aes(ymin = LCI-1, ymax = UCI-1), 
+                width = 0, color = "black", alpha=0.3, na.rm = TRUE, show.legend = FALSE, linewidth=0.25) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = unit(rep(-1,4), "cm"))+
+  coord_polar() + 
+  geom_text(data=label_data, aes(x=id, y=0.2, label=Abbreviations, hjust=hjust,  fontface=fontface),
+            alpha=1, size=2.5,colour ="black",
+            angle= label_data$angle, inherit.aes = FALSE) +
+  geom_text(data=label_data, aes(x=id, y=0.17, label=star, hjust=hjust),
+            alpha=1, size=4,colour ="black",
+            angle=label_data$angle , inherit.aes = FALSE)+ 
+  geom_rect(data=base_data,aes(xmin = start, xmax = end,ymin=-0.16,ymax=0.16
+  ),fill= base_data$background,alpha = 0.15, inherit.aes = F) +
+  geom_segment(data=base_data, aes(x = start, y = 0.40, xend = end, yend = 0.40),    
+               colour = "black", alpha=1, linewidth=0.6, inherit.aes = FALSE)  +
+  geom_text(data=base_data, aes(x = title, y = 0.45, label=Group, hjust=0.45),         
+            colour ="black", alpha=1, size=4,         
+            angle = -base_data$title_angFle,             
+            fontface="bold", inherit.aes = FALSE)
+circ_p_agesex
+ggsave(paste0("C:/Users/Lenovo/Desktop/subclass-subclass2",".pdf"), circ_p_agesex, width =446, height = 343, dpi=600, units = "mm")
