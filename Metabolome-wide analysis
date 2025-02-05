@@ -7,8 +7,8 @@ SAS code
 /* The data are stored in a SAS working dataset called ‘Cleaned_dataset_3’ */
 
 proc phreg data=Cleaned_dataset_3;
-class sex(ref='0') bmi1(ref='0')  alcohol(ref='0') smoking(ref='0') ftcat3(ref='0') Lipid_lowering_drugs(ref='0') knee_injury(ref='0')/param=ref;
-model followy_oa*STATUS(0)=metat10 age sex bmi1 alcohol smoking ftcat3 Lipid_lowering_drugs knee_injury Townsend/eventcode=1 risklimits;
-by meta_name;
+class sex(ref='0') bmicat(ref='0')  alcohol(ref='0') smoking(ref='0') ftcat(ref='0') Lipid_lowering_drugs(ref='0') knee_injury(ref='0')/param=ref;
+model followy_oa*STATUS(0)=Lipoprotein age sex bmicat alcohol smoking ftcat Lipid_lowering_drugs knee_injury Townsend/eventcode=1 risklimits;
+by Lipoprotein_name;
 ods output parameterestimates=pred;
 run;
